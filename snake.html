@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+  <link rel="stylesheet" href="./css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego de la serpiente</title>
+</head>
+<body>
+  <div id="score">0</div>
+  <canvas id="game_canvas" width="300" height="300"></canvas>
+  <script>
+    /* Constantes para el entorno y la serpiente */
+    const color_borde_canvas = 'black';
+    const color_fondo_canvas = 'white';
+    const color_serpiente = 'green';
+    const color_borde_serpiente = 'black';
+    
+    let serpiente = [
+      { x: 150, y: 150 },
+      { x: 140, y: 150 },
+      { x: 130, y: 150 },
+      { x: 120, y: 150 },
+      { x: 110, y: 150 },
+    ];
+
+    let dx = 10; // Velocidad horizontal
+    let dy = 0; // Velocidad vertical
+    let score = 0 // puntuación
+    let changingDirection = false
+
+    // Obtener el elemento del canvas
+    var game_canvas = document.getElementById("game_canvas");
+
+    // Obtener un contexto de dibujo 2D
+    var ctx = game_canvas.getContext("2d");
+
+    // Función para rellenar el canvas con el color de fondo y dibujar un borde
+    function limpiarCanvas() {
+      ctx.fillStyle = color_fondo_canvas;
+      ctx.fillRect(0, 0, game_canvas.width, game_canvas.height);
+      ctx.strokeStyle = color_borde_canvas;
+      ctx.strokeRect(0, 0, game_canvas.width, game_canvas.height);
+    }
+
+    // Función para dibujar un cuadrado que representa una parte de la serpiente
+    function dibujarParteSerpiente(parte) {
+      ctx.fillStyle = color_serpiente;
+      ctx.strokeStyle = color_borde_serpiente;
+      ctx.fillRect(parte.x, parte.y, 10, 10);
+      ctx.strokeRect(parte.x, parte.y, 10, 10);
+    }
+
+    // Función para actualizar y dibujar la serpiente
+    function actualizarSerpiente() {
+      const cabeza = { x: serpiente[0].x + dx, y: serpiente[0].y + dy };
+      serpiente.unshift(cabeza); // Agregar nueva cabeza
+      
+      const comio_serpiente = serpiente[0].x === comidax && serpiente[0].y === comiday
+      if (comio_serpiente) {
+        score += 10
+        document.getElementById('score').innerHTML = score
+        crearComida()
+      } else {
+        serpiente.pop()
+      }
+
+      limpiarCanvas();
+      serpiente.forEach(dibujarParteSerpiente); // Dibujar cada parte de la serpiente
+      dibujarComida(); // Dibujar la comida
+    }
+
+    // Función principal para llamar a la actualización y establecer el intervalo para la animación
+    function principal() {
+        setTimeout(function onTick() {
+            changingDirection = false
+        },100 //tiempo el timeout
+        )
+        if (finJuego()) return;
+      actualizarSerpiente();
+      setTimeout(principal, 100); // Volver a llamar a la función principal después de 100 milisegundos
+    }
+
+    // Función para cambiar la dirección de la serpiente:
+    function cambiarDireccion(event) {
+        const left_key = 37
+        const right_key = 39
+        const up_key = 38
+        const down_key = 40
+
+        if (changingDirection) return;
+        changingDirection = true
+
+        const keyPressed = event.keyCode
+        const irArriba = dy === -10
+        const irAbajo = dy === 10
+        const irDerecha = dx === 10
+        const irIzquierda = dx === -10
+
+        if (keyPressed === left_key && !irDerecha) {
+            dx = -10
+            dy = 0
+        }
+        if (keyPressed === up_key && !irAbajo) {
+            dx = 0
+            dy = -10
+        }
+        if (keyPressed === right_key && !irIzquierda) {
+            dx = 10
+            dy = 0
+        }
+        if (keyPressed === down_key && !irArriba) {
+            dx = 0
+            dy = 10
+        }
+    }
+
+    // Función para generar la ubicación de la comida
+    function randomTen(min,max) {
+        return Math.round((Math.random() * (max-min) + min) / 10) * 10
+    }
+
+    // Función para crear la comida
+    function crearComida() {
+        comidax = randomTen(0,game_canvas.width-10)
+        comiday = randomTen(0,game_canvas.height -10)
+
+        serpiente.forEach(function comida_en_serpiente(part) {
+            const comio_serpiente = part.x === comidax && part.y === comiday
+            if (comio_serpiente)
+                crearComida()
+        })
+    }
+
+    // Función para dibujar la comida
+    function dibujarComida() {
+        ctx.fillStyle='red'
+        ctx.strokeStyle = 'darkred'
+        ctx.fillRect ( comidax,comiday,10,10)
+        ctx.strokeRect(comidax, comiday, 10,10)
+    }
+
+    // funcion para definir el fin del juego
+    function finJuego() {
+        for (let i = 4; i < serpiente.length; i++ ) {
+            const choco = serpiente[i].x === serpiente[0].x && serpiente[i].y === serpiente[0].y
+            if (choco) return true
+        }
+        const chocoIzquierda = serpiente[0].x <0
+        const chocoDerecha = serpiente[0].x > game_canvas.width - 10
+        const chocoArriba = serpiente[0].y < 0
+        const chocoAbajo = serpiente[0].y > game_canvas.height -10
+
+        return chocoIzquierda || chocoDerecha || chocoArriba || chocoAbajo
+
+    }
+    
+    crearComida();
+    principal(); // Iniciar el bucle del juego
+    // se añade lo siguiente para que tome los eventos de al presionar
+    // alguna tecla y pueda funcionar la función cambiarDireccion
+    document.addEventListener('keydown', cambiarDireccion);
+  </script>
+</body>
+</html>
